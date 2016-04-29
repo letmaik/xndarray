@@ -2,13 +2,20 @@ import ndarray from 'ndarray'
 
 // TODO add domains arguments (values per axis), handle in lo/hi/step methods
 
-export default function xndarray (ndarr, names) {
+export default function xndarray (data, options) {
+  let ndarr = {data}
+  extend(ndarr, options)
+  let names = options.names
+  return _xndarray(ndarr, names)
+}
+
+function _xndarray (ndarr, names) {
   let nd = ndarray(ndarr.data, ndarr.shape, ndarr.stride, ndarr.offset)
-  if (!Array.isArray(names) || nd.dimension !== names.length) {
-    throw new Error('names array length must match ndarray dimension')
+  if (Array.isArray(names) && nd.dimension !== names.length) {
+    throw new Error('names array length must match nd dimension')
   }
   
-  let wrap = fn => (...args) => xndarray(fn.apply(nd, args), names)
+  let wrap = fn => (...args) => _xndarray(fn.apply(nd, args), names)
   let xnd = {
     // ndarray instance members
     data: nd.data,
@@ -34,13 +41,15 @@ export default function xndarray (ndarr, names) {
     // new instance members
     names
   }
-  extend(xnd, compileFunctions(nd, names))
+  if (names) {
+    extend(xnd, compileFunctions(nd, names))
+  }
   return xnd
 }
 
 function compileFunctions (ndarr, names) {
   let idxArgs = indexArgsString(names)
-  let wrap = newndarr => xndarray(newndarr, names)
+  let wrap = newndarr => _xndarray(newndarr, names)
   return {
     xget: new Function('ndarr', `return function xget (obj) { return ndarr.get(${idxArgs}) }`)(ndarr),
     xset: new Function('ndarr', `return function xset (obj,v) { return ndarr.set(${idxArgs},v) }`)(ndarr),

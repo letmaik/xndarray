@@ -2,7 +2,7 @@
   "name": "xndarray",
   "version": "0.1.0",
   "license": "BSD-3-Clause",
-  "description": "Multi-dimensional arrays with semantics",
+  "description": "Multidimensional arrays with semantics",
   "repository": {
     "type": "git",
     "url": "https://github.com/neothemachine/xndarray.git"
@@ -31,7 +31,7 @@
     "testkarma": "karma start --single-run",
     "karma": "karma start",
     "saucelabs": "karma start karma.conf-ci.js",
-    "browserdist": "browserify lib/xndarray.js -s XNdArray -o xndarray.src.js",
+    "browserdist": "browserify lib/xndarray.js -s xndarray -o xndarray.src.js",
     "postbrowserdist": "uglifyjs xndarray.src.js -c unused=false -o xndarray.min.js --source-map xndarray.min.js.map",
     "build": "npm run transpile && npm run browserdist",
     "prepublish": "npm run build"
