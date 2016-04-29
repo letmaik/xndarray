@@ -23,7 +23,6 @@
     "xndarray.*"
   ],
   "scripts": {
-    "docs": "esdoc -c esdoc.json",
     "style": "standard",
     "transpile": "babel -d lib/ src/",
     "test": "npm run transpile && npm run testnode && npm run testkarma",
@@ -52,8 +51,6 @@
     "babel-register": "^6.3.13",
     "babelify": "^7.2.0",
     "browserify": "^11.0.1",
-    "esdoc": "^0.4.1",
-    "esdoc-importpath-plugin": "0.0.1",
     "karma": "^0.13.9",
     "karma-browserify": "^4.4.2",
     "karma-chrome-launcher": "^0.2.0",

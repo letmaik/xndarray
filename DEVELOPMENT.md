@@ -42,9 +42,8 @@ Note that the ndarray dependency is included in the bundle.
 1. Raise the version number in package.json.
 2. If it is a minor or major version change, update the version in README.md.
 3. Create a semver git tag (`x.y.z`) and push it.
-4. Regenerate documentation at https://doc.esdoc.org.
-5. Run `npm publish`.
-6. Attach the `xndarray.{src|min}.js` files to the GitHub release.
+4. Run `npm publish`.
+5. Attach the `xndarray.{src|min}.js` files to the GitHub release.
 
 The last two steps build and publish the package to the npm registry.
 This project is registered on http://www.jsdelivr.com such that on every new

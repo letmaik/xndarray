@@ -14,7 +14,7 @@ function _xndarray (ndarr, names) {
   if (Array.isArray(names) && nd.dimension !== names.length) {
     throw new Error('names array length must match nd dimension')
   }
-  
+
   let wrap = fn => (...args) => _xndarray(fn.apply(nd, args), names)
   let xnd = {
     // ndarray instance members
@@ -22,14 +22,14 @@ function _xndarray (ndarr, names) {
     shape: nd.shape,
     stride: nd.stride,
     offset: nd.offset,
-    
+
     // ndarray properties
     // TODO define as Property as in ndarray to reduce memory footprint
     dtype: nd.dtype,
     size: nd.size,
     order: nd.order,
     dimension: nd.dimension,
-    
+
     // ndarray methods
     get: nd.get.bind(nd),
     set: nd.set.bind(nd),
@@ -37,7 +37,7 @@ function _xndarray (ndarr, names) {
     lo: wrap(nd.lo),
     hi: wrap(nd.hi),
     step: wrap(nd.step),
-    
+
     // new instance members
     names
   }
@@ -63,11 +63,10 @@ function compileFunctions (ndarr, names) {
 
 function indexArgsString (names) {
   let ndargs = ''
-  for (let i=0; i < names.length; i++) {
+  for (let i = 0; i < names.length; i++) {
     if (ndargs) ndargs += ','
-    // TODO benchmark both variants
+    // the line below is not obj['${names[i]}'] || 0 since we need to handle null/undefined as well
     ndargs += `'${names[i]}' in obj ? obj['${names[i]}'] : 0`
-    //ndargs += `obj['${names[i]}'] || 0`
   }
   return ndargs
 }

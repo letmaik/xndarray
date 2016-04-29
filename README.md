@@ -16,7 +16,7 @@ var arr = xndarray(...)
 
 ## Usage
 
-Create an xndarray view:
+Creation:
 ```js
 var arr = xndarray(new Uint8Array([1, 2, 3, 4], {shape: [2,2], names: ['y','x']})
 
@@ -26,7 +26,7 @@ var arr = xndarray(new Uint8Array([1, 2, 3, 4], {shape: [2,2], names: ['y','x']}
 
 If the `names` option is given, then a number of additional methods are available for working directly with axis names.
 
-Access elements:
+Element access:
 ```js
 var v1 = arr.get(0,0) // 1
 var v2 = arr.xget({y: 0, x: 1}) // 2
@@ -37,4 +37,16 @@ arr.xset({y: 1, x: 1}, 5)
 // arr = 9 2
 //       3 5
 ```
+
+Slicing:
+```js
+var s1 = arr.xlo({x: 1, y: 0})
+
+// s1 = 1
+//      3
+
+var s2 = arr.xhi({x: 1, y: 0})
+
+// s2 = 9 2
+``` 
 
