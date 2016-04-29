@@ -1,0 +1,10 @@
+/.project
+/*.log
+/node_modules/
+/sauce.json
+/xndarray.src.js
+/xndarray.min.js
+/xndarray.min.js.map
+/docs/
+/.tern-project
+/lib

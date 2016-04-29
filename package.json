@@ -1,0 +1,66 @@
+{
+  "name": "xndarray",
+  "version": "0.1.0",
+  "license": "BSD-3-Clause",
+  "description": "Multi-dimensional arrays with semantics",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neothemachine/xndarray.git"
+  },
+  "bugs": {
+    "url": "https://github.com/neothemachine/xndarray/issues"
+  },
+  "author": {
+    "name": "Maik Riechert"
+  },
+  "main": "lib/xndarray.js",
+  "dependencies": {
+    "ndarray": "^1.0.18"
+  },
+  "files": [
+    "src/",
+    "lib/",
+    "xndarray.*"
+  ],
+  "scripts": {
+    "docs": "esdoc -c esdoc.json",
+    "style": "standard",
+    "transpile": "babel -d lib/ src/",
+    "test": "npm run transpile && npm run testnode && npm run testkarma",
+    "testnode": "mocha --compilers js:babel-register",
+    "testkarma": "karma start --single-run",
+    "karma": "karma start",
+    "saucelabs": "karma start karma.conf-ci.js",
+    "browserdist": "browserify lib/xndarray.js -s XNdArray -o xndarray.src.js",
+    "postbrowserdist": "uglifyjs xndarray.src.js -c unused=false -o xndarray.min.js --source-map xndarray.min.js.map",
+    "build": "npm run transpile && npm run browserdist",
+    "prepublish": "npm run build"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": [
+      "karma.conf.js",
+      "karma.conf-ci.js",
+      "test/"
+    ]
+  },
+  "devDependencies": {
+    "babel-cli": "^6.3.17",
+    "babel-eslint": "^4.1.3",
+    "babel-plugin-add-module-exports": "^0.1.4",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-register": "^6.3.13",
+    "babelify": "^7.2.0",
+    "browserify": "^11.0.1",
+    "esdoc": "^0.4.1",
+    "esdoc-importpath-plugin": "0.0.1",
+    "karma": "^0.13.9",
+    "karma-browserify": "^4.4.2",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-mocha": "^0.2.0",
+    "karma-sauce-launcher": "^0.2.14",
+    "mocha": "^2.2.5",
+    "standard": "^5.1.0",
+    "uglify-js": "^2.4.24"
+  }
+}
