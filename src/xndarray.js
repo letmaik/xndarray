@@ -55,13 +55,16 @@ function _xndarray (ndarr, names) {
 function compileFunctions (ndarr, names) {
   let fns = {}
   
-  let idxArgs0 = indexArgsString(names, '0')  
+  // we don't use obj['${names[i]}'] || ${defaultVal} since we need to handle null/undefined as well
+  let indexArgsFn = defaultVal => names.map((_,i) => `'${names[i]}' in obj ? obj['${names[i]}'] : ${defaultVal}`).join(',')
+  
+  let idxArgs0 = indexArgsFn('0')  
   for (let [name, args=''] of [['get'], ['set', ',v'], ['index']]) {
     fns['x' + name] = new Function('ndarr', 
         `return function x${name} (obj${args}) { return ndarr.${name}(${idxArgs0}${args}) }`)(ndarr)
   }
   
-  let idxArgsNull = indexArgsString(names, 'null')
+  let idxArgsNull = indexArgsFn('null')
   let wrap = newndarr => _xndarray(newndarr, names)
   for (let name of ['lo', 'hi', 'step']) {
     fns['x' + name] = new Function('ndarr', 'wrap', 
@@ -85,16 +88,6 @@ function compileFunctions (ndarr, names) {
       `return function xpick (obj) { return wrap(ndarr.pick(${idxArgsNull}), obj) }`)(ndarr, wrapPick)
 
   return fns
-}
-
-function indexArgsString (names, defaultVal) {
-  let ndargs = ''
-  for (let i = 0; i < names.length; i++) {
-    if (ndargs) ndargs += ','
-    // the line below is not obj['${names[i]}'] || ${defaultVal} since we need to handle null/undefined as well
-    ndargs += `'${names[i]}' in obj ? obj['${names[i]}'] : ${defaultVal}`
-  }
-  return ndargs
 }
 
 function extend (obj, props) {
