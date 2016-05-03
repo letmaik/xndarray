@@ -12,24 +12,11 @@ export default function xndarray (data, options) {
 function _xndarray (ndarr, names) {
   let nd = ndarray(ndarr.data, ndarr.shape, ndarr.stride, ndarr.offset)
   if (Array.isArray(names) && nd.dimension !== names.length) {
-    throw new Error('names array length must match nd dimension')
+    throw new Error('names array length must match nd dimension ' + nd.dimension + ': ' + names)
   }
 
   let wrap = fn => (...args) => _xndarray(fn.apply(nd, args), names)
   let xnd = {
-    // ndarray instance members
-    data: nd.data,
-    shape: nd.shape,
-    stride: nd.stride,
-    offset: nd.offset,
-
-    // ndarray properties
-    // TODO define as Property as in ndarray to reduce memory footprint
-    dtype: nd.dtype,
-    size: nd.size,
-    order: nd.order,
-    dimension: nd.dimension,
-
     // ndarray methods
     get: nd.get.bind(nd),
     set: nd.set.bind(nd),
@@ -37,10 +24,28 @@ function _xndarray (ndarr, names) {
     lo: wrap(nd.lo),
     hi: wrap(nd.hi),
     step: wrap(nd.step),
+    transpose: (...axes) => {
+      let newndarr = nd.transpose(...axes)
+      let newnames = names ? axes.map(i => names[i]) : undefined
+      return _xndarray(newndarr, newnames)
+    },
+    pick: (...indices) => {
+      let newndarr = nd.pick(...indices)
+      let newnames = names ? names.filter((_,i) => !(typeof indices[i] === 'number' && indices[i] >= 0)) : undefined
+      return _xndarray(newndarr, newnames)
+    },
 
     // new instance members
     names
   }
+  
+  // proxy ndarray properties unchanged
+  for (let prop of ['data', 'shape', 'stride', 'offset', 'dtype', 'size', 'order', 'dimension']) {
+    Object.defineProperty(xnd, prop, {
+      get: () => nd[prop]
+    })
+  }
+  
   if (names) {
     extend(xnd, compileFunctions(nd, names))
   }
@@ -48,25 +53,46 @@ function _xndarray (ndarr, names) {
 }
 
 function compileFunctions (ndarr, names) {
-  let idxArgs = indexArgsString(names)
-  let wrap = newndarr => _xndarray(newndarr, names)
-  return {
-    xget: new Function('ndarr', `return function xget (obj) { return ndarr.get(${idxArgs}) }`)(ndarr),
-    xset: new Function('ndarr', `return function xset (obj,v) { return ndarr.set(${idxArgs},v) }`)(ndarr),
-    xindex: new Function('ndarr', `return function xindex (obj) { return ndarr.index(${idxArgs}) }`)(ndarr),
-    xlo: new Function('ndarr', 'wrap', `return function xlo (obj) { return wrap(ndarr.lo(${idxArgs})) }`)(ndarr, wrap),
-    xhi: new Function('ndarr', 'wrap', `return function xhi (obj) { return wrap(ndarr.hi(${idxArgs})) }`)(ndarr, wrap),
-    xstep: new Function('ndarr', 'wrap', `return function xstep (obj) { return wrap(ndarr.step(${idxArgs})) }`)(ndarr, wrap)
-    // TODO add support for transpose() and pick(), requires change of "names"
+  let fns = {}
+  
+  let idxArgs0 = indexArgsString(names, '0')  
+  for (let [name, args=''] of [['get'], ['set', ',v'], ['index']]) {
+    fns['x' + name] = new Function('ndarr', 
+        `return function x${name} (obj${args}) { return ndarr.${name}(${idxArgs0}${args}) }`)(ndarr)
   }
+  
+  let idxArgsNull = indexArgsString(names, 'null')
+  let wrap = newndarr => _xndarray(newndarr, names)
+  for (let name of ['lo', 'hi', 'step']) {
+    fns['x' + name] = new Function('ndarr', 'wrap', 
+        `return function x${name} (obj) { return wrap(ndarr.${name}(${idxArgsNull})) }`)(ndarr, wrap)
+  }
+
+  // xtranspose input: axis name array, e.g. ['x','y']
+  // turn ['x','y'] into {x:0, y:1}
+  let namesMap = {}
+  for (let i=0; i < names.length; i++) {
+    namesMap[names[i]] = i
+  }
+  let transposeArgs = names.map((_,i) => `namesMap[axes[${i}]]`).join(',')
+  let wrapTranspose = (newndarr, newnames) => _xndarray(newndarr, newnames)
+  fns.xtranspose = new Function('ndarr', 'wrap', 'namesMap', 
+      `return function xtranspose (axes) { return wrap(ndarr.transpose(${transposeArgs}), axes) }`)(ndarr, wrapTranspose, namesMap)
+
+  let wrapPick = (newndarr, obj) => _xndarray(newndarr, names.filter(name => !(typeof obj[name] === 'number' && obj[name] >= 0)))
+  
+  fns.xpick = new Function('ndarr', 'wrap', 
+      `return function xpick (obj) { return wrap(ndarr.pick(${idxArgsNull}), obj) }`)(ndarr, wrapPick)
+
+  return fns
 }
 
-function indexArgsString (names) {
+function indexArgsString (names, defaultVal) {
   let ndargs = ''
   for (let i = 0; i < names.length; i++) {
     if (ndargs) ndargs += ','
-    // the line below is not obj['${names[i]}'] || 0 since we need to handle null/undefined as well
-    ndargs += `'${names[i]}' in obj ? obj['${names[i]}'] : 0`
+    // the line below is not obj['${names[i]}'] || ${defaultVal} since we need to handle null/undefined as well
+    ndargs += `'${names[i]}' in obj ? obj['${names[i]}'] : ${defaultVal}`
   }
   return ndargs
 }

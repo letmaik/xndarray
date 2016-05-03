@@ -101,5 +101,35 @@ describe('xndarray methods', () => {
         assert.strictEqual(evens.xget({x: 2}), 5)
       })
     })
+    describe('#transpose', () => {
+      it('should return an xndarray object again', () => {
+        let arr = xndarray([1,2,3,4], {shape: [2,3], names: ['y','x']})
+        let transposed = arr.transpose(1, 0)
+        assert.deepEqual(transposed.names, ['x','y'])
+        assert.deepEqual(transposed.shape, [3,2])
+      })
+    })
+    describe('#xtranspose', () => {
+      it('should work correctly', () => {
+        let arr = xndarray([1,2,3,4], {shape: [2,3], names: ['y','x']})
+        let transposed = arr.xtranspose(['x','y'])
+        assert.deepEqual(transposed.names, ['x','y'])
+        assert.deepEqual(transposed.shape, [3,2])
+      })
+    })
+    describe('#pick', () => {
+      it('should return an xndarray object again', () => {
+        let arr = xndarray(new Uint8Array(50*50*3), {shape: [50,50,3], names: ['y','x','c']})
+        let sliced = arr.pick(null, null, 0)
+        assert.deepEqual(sliced.names, ['y','x'])
+      })
+    })
+    describe('#xpick', () => {
+      it('should work correctly', () => {
+        let arr = xndarray(new Uint8Array(50*50*3), {shape: [50,50,3], names: ['y','x','c']})
+        let sliced = arr.xpick({c: 0})
+        assert.deepEqual(sliced.names, ['y','x'])
+      })
+    })
   })
 })
