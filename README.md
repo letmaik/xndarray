@@ -46,34 +46,33 @@ var idx = arr.xindex({y: 1, x: 0}) // 3
 // arr.lo(null, 1)
 var s1 = arr.xlo({x: 1})
 
-// s1 == 2 3
-//       8 6
+// s1 = 2 3
+//      5 6
 
 // arr.hi(null, 2)
 var s2 = arr.xhi({x: 2})
 
-// s2 == 1 2
-//       4 8
+// s2 = 1 2
+//      4 5
 
 // arr.step(null, 2)
 var s3 = arr.xstep({x: 2})
 
-// s3 == 1 3
-//       4 6
+// s3 = 1 3
+//      4 6
 
 // arr.transpose(1, 0)
 var s4 = arr.xtranspose(['x','y'])
 
-// s4 == 1 4
-//       2 8
-//       3 6
+// s4 = 1 4
+//      2 5
+//      3 6
 // 
-// s4.names == ['x','y']
-
+// s4.names = ['x','y']
 // arr.pick(null, 1)
 var s5 = arr.xpick({x: 1})
 
-// s5 == 2 8
+// s5 == 2 5
 // s5.dimension == 1
 // s5.names == ['y']
 ``` 
