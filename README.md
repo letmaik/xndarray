@@ -16,7 +16,7 @@ var arr = xndarray(...)
 
 ## Usage
 
-Creation:
+### Creation
 ```js
 var arr = xndarray(new Uint8Array([1, 2, 3, 4, 5, 6]), {shape: [2,3], names: ['y','x']})
 
@@ -26,7 +26,7 @@ var arr = xndarray(new Uint8Array([1, 2, 3, 4, 5, 6]), {shape: [2,3], names: ['y
 
 If the `names` option is given, then a number of additional `x`-prefixed methods are available that work directly with axis names.
 
-Element access:
+### Element access
 ```js
 // arr.get(0, 1)
 var v = arr.xget({y: 0, x: 1}) // 2
@@ -41,7 +41,7 @@ arr.xset({y: 1, x: 1}, 8)
 var idx = arr.xindex({y: 1, x: 0}) // 3
 ```
 
-Slicing:
+### Slicing
 ```js
 // arr.lo(null, 1)
 var s1 = arr.xlo({x: 1})
