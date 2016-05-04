@@ -28,15 +28,17 @@ When using the minified browser version, then this constructor is made available
 
 ### Constructor
 
-#### `xndarray(data, {shape, names, domains})`
+#### `xndarray(data, {shape, names, domains, stride, offset})`
 
 - `data` is a 1D array storage. It is either an instance of `Array`, a typed array, or an object that implements `get()`, `set()`, `.length`
 - `shape` is the shape of the view as an array of integers (Default: `[data.length]`)
 - `names` is an array of dimension names (Default: `['dim_0','dim_1',...]`)
-- `domains` is an array of 1D array storages. It is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length`
+- `domains` is an array of 1D array storages. It is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length` (Default: `[[0,1,2,...],[0,1,2,...],...]`)
+- `stride` is the resulting stride of the view. (Default: row major)
+- `offset` is the offset to start the view (Default: 0)
 
 ```js
-var arr = xndarray([1, 2, 3, 4, 5, 6], {shape: [2,3], names: ['y','x']})
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
 
 // arr == 1 2 3
 //        4 5 6
@@ -84,6 +86,8 @@ Additional members:
 #### `array.get(i,j,...)` / `array.xget({x: i, y: j, ...})`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.get(0, 1)
 var v = arr.xget({y: 0, x: 1}) 
 
@@ -93,6 +97,8 @@ var v = arr.xget({y: 0, x: 1})
 #### `array.set(i,j,...,v)` / `array.xset({x: i, y: j, ...}, v)`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.set(1, 1, 8)
 arr.xset({y: 1, x: 1}, 8)
 
@@ -103,6 +109,8 @@ arr.xset({y: 1, x: 1}, 8)
 #### `array.index(i,j,...)` / `array.xindex({x: i, y: j, ...})`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.index(1, 0)
 var idx = arr.xindex({y: 1, x: 0})
 
@@ -114,6 +122,8 @@ var idx = arr.xindex({y: 1, x: 0})
 #### `array.lo(i,j,...)` / `array.xlo({x: i, y: j, ...})`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.lo(null, 1)
 var a = arr.xlo({x: 1})
 
@@ -124,6 +134,8 @@ var a = arr.xlo({x: 1})
 #### `array.hi(i,j,...)` / `array.xhi({x: i, y: j, ...})`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.hi(null, 2)
 var a = arr.xhi({x: 2})
 
@@ -134,6 +146,8 @@ var a = arr.xhi({x: 2})
 #### `array.step(i,j,...)` / `array.xstep({x: i, y: j, ...})`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.step(null, 2)
 var a = arr.xstep({x: 2})
 
@@ -144,6 +158,8 @@ var a = arr.xstep({x: 2})
 #### `array.transpose(p0, p1, ...)` / `array.xtranspose('x','y',...)`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.transpose(1, 0)
 var a = arr.xtranspose('x', 'y')
 
@@ -157,6 +173,8 @@ var a = arr.xtranspose('x', 'y')
 #### `array.pick(i,j,...)` / `array.xpick({x: i, y: j, ...})`
 
 ```js
+var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+
 // arr.pick(null, 1)
 var a = arr.xpick({x: 1})
 
