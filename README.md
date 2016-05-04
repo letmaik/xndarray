@@ -2,9 +2,13 @@
 
 Multidimensional arrays with semantics in JavaScript.
 
-## Get started
+## Introduction
 
-xndarray works on node.js and browsers.
+
+
+## Install
+
+xndarray works on browsers and any tool following the CommonJS/node module conventions.
 
 A minified browser version of this library is available in the [GitHub releases](https://github.com/neothemachine/xndarray/releases) and can be included like that:
 ```html
@@ -14,31 +18,91 @@ var arr = xndarray(...)
 </script>
 ```
 
-## Usage
+## API
 
-### Creation
+If you use xndarray within a CommonJS/node environment, then import the constructor as follows:
 ```js
-var arr = xndarray(new Uint8Array([1, 2, 3, 4, 5, 6]), {shape: [2,3], names: ['y','x']})
+var xndarray = require('xndarray')
+```
+When using the minified browser version, then this constructor is made available globally under the same name.
+
+### Constructor
+
+#### `xndarray(data, {shape, names, domains})`
+
+- `data` is a 1D array storage. It is either an instance of `Array`, a typed array, or an object that implements `get()`, `set()`, `.length`
+- `shape` is the shape of the view as an array of integers (Default: `[data.length]`)
+- `names` is an array of dimension names (Default: `['dim_0','dim_1',...]`)
+- `domains` is an array of 1D array storages. It is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length`
+
+```js
+var arr = xndarray([1, 2, 3, 4, 5, 6], {shape: [2,3], names: ['y','x']})
 
 // arr == 1 2 3
 //        4 5 6
 ```
 
-If the `names` option is given, then a number of additional `x`-prefixed methods are available that work directly with axis names.
+#### `xndarray(ndarr, {names, domains})`
+
+This constructor variant wraps existing ndarray objects.
+
+- `ndarr` is an [ndarray][ndarray] object.
+- `names` is an array of dimension names (Default: `['dim_0','dim_1',...]`)
+- `domains` is an array of 1D array storages. Each 1D array storage is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length` (Default: `[[0,1,2,...],[0,1,2,...],...]`)
+
+xndarray is fully compatible with [ndarray][ndarray] and can directly wrap such objects:
+```js
+var nd = ndarray([1,2,3,4], [2,2])
+var xnd = xndarray(nd, { names: ['y','x'] })
+```
+
+All [ndarray modules](http://scijs.net/packages/) can directly be used on xndarray objects:
+```js
+var unpack = require('ndarray-unpack')
+var nd2 = unpack(xnd) // [[1,2],[3,4]]
+```
+[ndarray][ndarray] functions that return a new [ndarray][ndarray] object will not have any xndarray functionality and have to be wrapped again.
+
+### Members
+
+Members originating from [ndarray][ndarray]:
+- `array.data` - The underlying 1D storage for the multidimensional array
+- `array.shape` - The shape of the array
+- `array.dimension` - Dimension of the array as an integer (equals `array.shape.length`)
+- `array.size` - Size of the array in logical elements (equals `array.shape[0]*array.shape[1]*...`)
+- `array.stride` - The layout of the array in memory
+- `array.offset` - The starting offset of the array in memory
+- `array.dtype` - String representing the underlying data type
+- `array.order` - Order of the stride of the array, sorted in ascending length
+
+Additional members:
+- `array.names` - The dimension names. A string array of length `array.dimension`.
+- `array.domains` - Coordinates for each dimension. An array of length `array.dimension` of 1D [ndarrays][ndarray].
 
 ### Element access
+
+#### `array.get(i,j,...)` / `array.xget({x: i, y: j, ...})`
+
 ```js
 // arr.get(0, 1)
 var v = arr.xget({y: 0, x: 1}) 
 
 // v == 2
+```
 
+#### `array.set(i,j,...,v)` / `array.xset({x: i, y: j, ...}, v)`
+
+```js
 // arr.set(1, 1, 8)
 arr.xset({y: 1, x: 1}, 8)
 
 // arr == 1 2 3
 //        4 8 6
+```
 
+#### `array.index(i,j,...)` / `array.xindex({x: i, y: j, ...})`
+
+```js
 // arr.index(1, 0)
 var idx = arr.xindex({y: 1, x: 0})
 
@@ -46,39 +110,65 @@ var idx = arr.xindex({y: 1, x: 0})
 ```
 
 ### Slicing
+
+#### `array.lo(i,j,...)` / `array.xlo({x: i, y: j, ...})`
+
 ```js
 // arr.lo(null, 1)
-var s1 = arr.xlo({x: 1})
+var a = arr.xlo({x: 1})
 
-// s1 == 2 3
-//       5 6
+// a == 2 3
+//      5 6
+```
 
+#### `array.hi(i,j,...)` / `array.xhi({x: i, y: j, ...})`
+
+```js
 // arr.hi(null, 2)
-var s2 = arr.xhi({x: 2})
+var a = arr.xhi({x: 2})
 
-// s2 == 1 2
-//       4 5
+// a == 1 2
+//      4 5
+```
 
+#### `array.step(i,j,...)` / `array.xstep({x: i, y: j, ...})`
+
+```js
 // arr.step(null, 2)
-var s3 = arr.xstep({x: 2})
+var a = arr.xstep({x: 2})
 
-// s3 == 1 3
-//       4 6
+// a == 1 3
+//      4 6
+```
 
+#### `array.transpose(p0, p1, ...)` / `array.xtranspose('x','y',...)`
+
+```js
 // arr.transpose(1, 0)
-var s4 = arr.xtranspose(['x','y'])
+var a = arr.xtranspose('x', 'y')
 
-// s4 == 1 4
-//       2 5
-//       3 6
+// a == 1 4
+//      2 5
+//      3 6
 // 
-// s4.names == ['x','y']
+// a.names == ['x','y']
+```
 
+#### `array.pick(i,j,...)` / `array.xpick({x: i, y: j, ...})`
+
+```js
 // arr.pick(null, 1)
-var s5 = arr.xpick({x: 1})
+var a = arr.xpick({x: 1})
 
-// s5 == 2 5
-// s5.dimension == 1
-// s5.names == ['y']
-``` 
+// a == 2 5
+// a.dimension == 1
+// a.names == ['y']
+```
 
+## Acknowledgments
+
+This library is inspired by the Python packages [PyHRF](http://pyhrf.org) (see [pyhrf.ndarray.xndarray class](http://pyhrf.org/autodoc/pyhrf.ndarray.html#pyhrf.ndarray.xndarray)) and [xarray](http://xarray.pydata.org).
+It is based on and compatible with the [ndarray][ndarray] JavaScript library.
+
+
+[ndarray]: https://github.com/scijs/ndarray "ndarray"

@@ -62,7 +62,7 @@ describe('README examples', () => {
     assert.deepEqual(unpack(s3), [[1,3],[4,6]])
     
     // arr.transpose(1, 0)
-    var s4 = arr.xtranspose(['x','y'])
+    var s4 = arr.xtranspose('x','y')
     
     // s4 = 1 4
     //      2 5
