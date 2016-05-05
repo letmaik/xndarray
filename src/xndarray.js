@@ -5,7 +5,7 @@ import ndarray from 'ndarray'
  * @param {NdArray|Array<Array>|Array<TypedArray>|Array<{get,set,length}>} data
  * @param {Array<number>} [options.shape] - Array shape, not used if data is an NdArray
  * @param {Array<String>} [options.names] - Axis names
- * @param {Array} [options.domains] - Domain values for each axis. 
+ * @param {Object|Map} [options.coords] - Coordinates for each axis. Requires options.names.
  *   Values are either an Array, TypedArray, get/set/length object, or NdArray object.
  */
 export default function xndarray (data, options={}) {
@@ -20,31 +20,43 @@ export default function xndarray (data, options={}) {
     throw new Error('names array length must match nd dimension ' + ndarr.dimension + ': ' + names)
   }
 
-  let domains = options.domains || {}
-  if (!Array.isArray(domains)) {
-    if (!names) {
-      throw new Error('domains must be an array if names is missing')
-    }
-    domains = names.map(name => domains[name])
+  let coords
+  if (options.coords instanceof Map) {
+    // already a Map object
+    coords = options.coords
+  } else if (options.coords) {
+    // a plain object, transform to Map
+    let coordsNames = Object.keys(options.coords)
+    let coordsArr = coordsNames.map(name => !options.coords[name].shape ? ndarray(options.coords[name]) : options.coords[name])
+    coords = new Map(zip(coordsNames, coordsArr))
+  } else {
+    coords = new Map()
   }
+  
+  // add missing dimension coordinates as ascending integers
   let arange = length => ndarray({get: i => i, length})
-  domains = domains.map((domain,i) => domain ? (!domain.shape ? ndarray(domain) : domain) : arange(ndarr.shape[i]))
+  for (let i=0; i < names.length; i++) {
+    if (!coords.has(names[i])) {
+      coords.set(names[i], arange(ndarr.shape[i]))
+    }
+  }
 
-  return _xndarray(ndarr, names, domains)
+  return _xndarray(ndarr, names, coords)
 }
 
 /**
  * 
  * @param {NdArray} nd
  * @param {Array<String>} names - axis names
- * @param {Array<NdArray>} domains - domain values for each axis
+ * @param {Map<String,NdArray>} coords - coordinates
  * @returns {XNdArray}
  */
-function _xndarray (nd, names, domains) {
+function _xndarray (nd, names, coords) {
   let wrapSimple = fnname => (...args) => {
     let newnd = nd[fnname](...args)
-    let newdomains = args.map((arg,i) => domains[i][fnname](arg))
-    return _xndarray(newnd, names, newdomains)
+    let newcoords = new Map(coords)
+    args.forEach((arg,i) => newcoords.set(names[i], coords.get(names[i])[fnname](arg)))
+    return _xndarray(newnd, names, newcoords)
   }
   let xnd = {
     // ndarray methods
@@ -57,20 +69,24 @@ function _xndarray (nd, names, domains) {
     transpose: (...axes) => {
       let newndarr = nd.transpose(...axes)
       let newnames = axes.map(i => names[i])
-      let newdomains = axes.map(i => domains[i])
-      return _xndarray(newndarr, newnames, newdomains)
+      return _xndarray(newndarr, newnames, coords)
     },
     pick: (...indices) => {
       let newndarr = nd.pick(...indices)
-      let filterFn = (_,i) => !(typeof indices[i] === 'number' && indices[i] >= 0)
-      let newnames = names.filter(filterFn)
-      let newdomains = domains.filter(filterFn)
-      return _xndarray(newndarr, newnames, newdomains)
+      let isPicked = i => typeof indices[i] === 'number' && indices[i] >= 0
+      let newnames = names.filter((_,i) => !isPicked(i))
+      let newcoords = new Map(coords)
+      indices.forEach((idx,i) => {
+        if (isPicked(i)) {
+          newcoords.set(names[i], coords.get(names[i]).pick(idx))
+        }
+      })
+      return _xndarray(newndarr, newnames, newcoords)
     },
 
     // new instance members
     names,
-    domains
+    coords
   }
   
   // proxy ndarray properties unchanged
@@ -80,10 +96,9 @@ function _xndarray (nd, names, domains) {
     })
   }
   
-  extend(xnd, compileAxisNamesFunctions(nd, names, domains))
-
-  let namesMap = getNamesIndexMap(names)
-  xnd.xdomain = name => domains[namesMap[name]]
+  extend(xnd, compileAxisNamesFunctions(nd, names, coords))
+  
+  xnd.toString = () => `XNdArray { shape: ${xnd.shape}, names: ${xnd.names} }`
   
   return xnd
 }
@@ -93,10 +108,10 @@ function _xndarray (nd, names, domains) {
  * 
  * @param {NdArray} ndarr
  * @param {Array<String>} names - axis names
- * @param {Array<NdArray>} domains - 1D domain array for each axis
+ * @param {Map<String,NdArray>} coords - 1D domain array for each axis
  * @returns {Object}
  */
-function compileAxisNamesFunctions (ndarr, names, domains) {
+function compileAxisNamesFunctions (ndarr, names, coords) {
   let fns = {}
   
   // we don't use obj['${names[i]}'] || ${defaultVal} since we need to handle null/undefined as well
@@ -110,30 +125,29 @@ function compileAxisNamesFunctions (ndarr, names, domains) {
   
   let idxArgsNull = indexArgsFn('null')
   for (let fnname of ['lo', 'hi', 'step']) {
-    let wrapSimple = (newndarr, obj) => {
-      let newdomains = names.map((_,i) => domains[i][fnname](obj[names[i]]))
-      return _xndarray(newndarr, names, newdomains)
+    let wrapLoHiStep = (newndarr, obj) => {
+      let newcoords = new Map(coords)
+      names.forEach(name => newcoords.set(name, coords.get(name)[fnname](obj[name])))
+      return _xndarray(newndarr, names, newcoords)
     }
     fns['x' + fnname] = new Function('ndarr', 'wrap',
-        `return function x${fnname} (obj) { return wrap(ndarr.${fnname}(${idxArgsNull}), obj) }`)(ndarr, wrapSimple)
+        `return function x${fnname} (obj) { return wrap(ndarr.${fnname}(${idxArgsNull}), obj) }`)(ndarr, wrapLoHiStep)
   }
 
   // xtranspose input: axis names, e.g. 'x', 'y'
   let namesMap = getNamesIndexMap(names)
-  let wrapTranspose = (newndarr, newnames) => {
-    let newdomains = newnames.map(name => domains[namesMap[name]])
-    return _xndarray(newndarr, newnames, newdomains)
-  }
+  let wrapTranspose = (newndarr, newnames) => _xndarray(newndarr, newnames, coords)
   let xtransposeArgs = names.map((_,i) => `n${i}`).join(',')
   let transposeArgs = names.map((_,i) => `namesMap[n${i}]`).join(',')
   fns.xtranspose = new Function('ndarr', 'wrap', 'namesMap',
       `return function xtranspose (${xtransposeArgs}) { return wrap(ndarr.transpose(${transposeArgs}), [${xtransposeArgs}]) }`)(ndarr, wrapTranspose, namesMap)
 
   let wrapPick = (newndarr, obj) => {
-    let filterFn = name => !(typeof obj[name] === 'number' && obj[name] >= 0)
-    let newnames = names.filter(filterFn)
-    let newdomains = domains.filter((_,i) => filterFn(names[i]))
-    return _xndarray(newndarr, newnames, newdomains)  
+    let isPicked = name => typeof obj[name] === 'number' && obj[name] >= 0
+    let newnames = names.filter(name => !isPicked(name))
+    let newcoords = new Map(coords)
+    names.filter(isPicked).forEach(name => newcoords.set(name, coords.get(name).pick(obj[name])))
+    return _xndarray(newndarr, newnames, newcoords)  
   }
   fns.xpick = new Function('ndarr', 'wrap', 
       `return function xpick (obj) { return wrap(ndarr.pick(${idxArgsNull}), obj) }`)(ndarr, wrapPick)
@@ -156,4 +170,12 @@ function extend (obj, props) {
   for (let prop in props) {
     obj[prop] = props[prop]
   }
+}
+
+function zip (a, b) {
+  let r = new Array(a.length)
+  for (let i=0; i < a.length; i++) {
+    r[i] = [a[i], b[i]]
+  }
+  return r
 }

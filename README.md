@@ -28,12 +28,12 @@ When using the minified browser version, then this constructor is made available
 
 ### Constructor
 
-#### `xndarray(data, {shape, names, domains, stride, offset})`
+#### `xndarray(data, {shape, names, coords, stride, offset})`
 
 - `data` is a 1D array storage. It is either an instance of `Array`, a typed array, or an object that implements `get()`, `set()`, `.length`
 - `shape` is the shape of the view as an array of integers (Default: `[data.length]`)
 - `names` is an array of dimension names (Default: `['dim_0','dim_1',...]`)
-- `domains` is an array of 1D array storages. It is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length` (Default: `[[0,1,2,...],[0,1,2,...],...]`)
+- `coords` is a coordinates map of 1D array storages. Each key is a (dimension) name and each value is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length` (Default: `{dim_0: [0,1,2,...], dim_1: [0,1,2,...],...}`)
 - `stride` is the resulting stride of the view. (Default: row major)
 - `offset` is the offset to start the view (Default: 0)
 
@@ -44,13 +44,13 @@ var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
 //        4 5 6
 ```
 
-#### `xndarray(ndarr, {names, domains})`
+#### `xndarray(ndarr, {names, coords})`
 
 This constructor variant wraps existing ndarray objects.
 
 - `ndarr` is an [ndarray][ndarray] object.
 - `names` is an array of dimension names (Default: `['dim_0','dim_1',...]`)
-- `domains` is an array of 1D array storages. Each 1D array storage is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length` (Default: `[[0,1,2,...],[0,1,2,...],...]`)
+- `coords` is a coordinates map of 1D array storages. Each key is a (dimension) name and each value is either an instance of `Array`, a typed array, an [ndarray][ndarray], or an object that implements `get()`, `set()`, `.length` (Default: `{dim_0: [0,1,2,...], dim_1: [0,1,2,...],...}`)
 
 xndarray is fully compatible with [ndarray][ndarray] and can directly wrap such objects:
 ```js
@@ -79,7 +79,7 @@ Members originating from [ndarray][ndarray]:
 
 Additional members:
 - `array.names` - The dimension names. A string array of length `array.dimension`.
-- `array.domains` - Coordinates for each dimension. An array of length `array.dimension` of 1D [ndarrays][ndarray].
+- `array.coords` - The dimension coordinates. A Map from (dimension) name to 1D [ndarrays][ndarray].
 
 ### Element access
 
