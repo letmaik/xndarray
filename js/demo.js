@@ -67,12 +67,16 @@ var GridDataLayer = L.GridLayer.extend({
         // find the right color in the palette
         var colorIdx = scale(val, this._palette, this.options.paletteExtent)
         var color = this._palette[colorIdx]
+        if (!color) {
+          // out of scale
+          continue
+        }
         
         // and draw it
-        rgba.set(tileY, tileX, 0, color[0])
-        rgba.set(tileY, tileX, 1, color[1])
-        rgba.set(tileY, tileX, 2, color[2])
-        rgba.set(tileY, tileX, 3, 255)
+        rgba.xset({y: tileY, x: tileX, c: 0}, color[0])
+        rgba.xset({y: tileY, x: tileX, c: 1}, color[1])
+        rgba.xset({y: tileY, x: tileX, c: 2}, color[2])
+        rgba.xset({y: tileY, x: tileX, c: 3}, 255)
       }
     }
     
@@ -136,6 +140,15 @@ function indexOfNearest (a, x) {
   }
 }
 
+function linspace (start, end, n) {
+  var d = (end - start) / (n - 1 )
+  return {
+    length: n,
+    get: function (i) {
+      return start + i * d
+    }
+  }
+}
 
 let map = L.map('map', {
   center: [10, 0],
@@ -146,6 +159,9 @@ L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
    attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
 }).addTo(map)
 
+
+
+// the data grid
 var griddata = xndarray(
   [17.3, 18.2, 16.5, 18.7,
    18.1, 19.4, 17.2, 18.6,
@@ -154,13 +170,20 @@ var griddata = xndarray(
   shape: [4,4],
   names: ['lat','lon'],
   coords: {
-    lat: [54, 52, 50, 48],
-    lon: [7, 9.4, 11.7, 14]
+    lat: linspace(54, 48, 4),
+    lon: linspace(7, 14, 4)
   }
 })
 
-var rasterLayer = new GridDataLayer(griddata, {
-  paletteExtent: [15, 25]
+// render it
+var paletteExtent = [15, 25]
+var originalRasterLayer = new GridDataLayer(griddata, {
+  paletteExtent: paletteExtent
 }).addTo(map)
+
+var overlays = {
+  'Temperature': originalRasterLayer
+}
+L.control.layers(null, overlays, {collapsed: false}).addTo(map)
 
 })()
