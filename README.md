@@ -38,11 +38,22 @@ When using the minified browser version, then this constructor is made available
 - `offset` is the offset to start the view (Default: 0)
 
 ```js
-var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+var arr = xndarray([1,2,3,4,5,6], {
+  shape: [2,3],
+  names: ['y','x'],
+  coords: {
+    y: [10,12,14],
+    x: [100,101,102],
+    t: [new Date('2001-01-01')]
+  }
+})
 
 // arr == 1 2 3
 //        4 5 6
 ```
+
+In the example, there are coordinates for the `y` and `x` dimensions plus an extra coordinate named `t`.
+Extra coordinates are ignored in operations like slicing and carried over unchanged.
 
 #### `xndarray(ndarr, {names, coords})`
 
@@ -55,7 +66,14 @@ This constructor variant wraps existing ndarray objects.
 xndarray is fully compatible with [ndarray][ndarray] and can directly wrap such objects:
 ```js
 var nd = ndarray([1,2,3,4], [2,2])
-var xnd = xndarray(nd, { names: ['y','x'] })
+var xnd = xndarray(nd, {
+  names: ['y','x'],
+  coords: {
+    y: [10,12,14],
+    x: [100,101,102],
+    t: [new Date('2001-01-01')]
+  }
+})
 ```
 
 All [ndarray modules](http://scijs.net/packages/) can directly be used on xndarray objects:
@@ -122,40 +140,74 @@ var idx = arr.xindex({y: 1, x: 0})
 #### `array.lo(i,j,...)` / `array.xlo({x: i, y: j, ...})`
 
 ```js
-var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+var arr = xndarray([1,2,3,4,5,6], {
+  shape: [2,3],
+  names: ['y','x'],
+  coords: {
+    y: [10,12,14],
+    x: [100,101,102]
+  }
+})
+
+// arr == 1 2 3
+//        4 5 6
 
 // arr.lo(null, 1)
 var a = arr.xlo({x: 1})
 
 // a == 2 3
 //      5 6
+// a.coords.get('y') == 10 12 14
+// a.coords.get('x') == 101 102
 ```
 
 #### `array.hi(i,j,...)` / `array.xhi({x: i, y: j, ...})`
 
 ```js
-var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+var arr = xndarray([1,2,3,4,5,6], {
+  shape: [2,3],
+  names: ['y','x'],
+  coords: {
+    y: [10,12,14],
+    x: [100,101,102]
+  }
+})
 
 // arr.hi(null, 2)
 var a = arr.xhi({x: 2})
 
 // a == 1 2
 //      4 5
+// a.coords.get('y') == 10 12 14
+// a.coords.get('x') == 100 101
 ```
 
 #### `array.step(i,j,...)` / `array.xstep({x: i, y: j, ...})`
 
 ```js
-var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+var arr = xndarray([1,2,3,4,5,6], {
+  shape: [2,3],
+  names: ['y','x'],
+  coords: {
+    y: [10,12,14],
+    x: [100,101,102]
+  }
+})
 
 // arr.step(null, 2)
 var a = arr.xstep({x: 2})
 
 // a == 1 3
 //      4 6
+// a.coords.get('y') == 10 12 14
+// a.coords.get('x') == 100 102
 ```
 
 #### `array.transpose(p0, p1, ...)` / `array.xtranspose('x','y',...)`
+
+The transpose/xtranspose functions change the axis order.
+This has no relevance if you only work with x-prefixed functions since they
+work directly on axis names.
 
 ```js
 var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
@@ -173,7 +225,14 @@ var a = arr.xtranspose('x', 'y')
 #### `array.pick(i,j,...)` / `array.xpick({x: i, y: j, ...})`
 
 ```js
-var arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
+var arr = xndarray([1,2,3,4,5,6], {
+  shape: [2,3],
+  names: ['y','x'],
+  coords: {
+    y: [10,12,14],
+    x: [100,101,102]
+  }
+})
 
 // arr.pick(null, 1)
 var a = arr.xpick({x: 1})
@@ -181,7 +240,11 @@ var a = arr.xpick({x: 1})
 // a == 2 5
 // a.dimension == 1
 // a.names == ['y']
+// a.coords.get('y') == 10 12 14
+// a.coords.get('x') == 101
 ```
+
+Note that the `x` coordinates get reduced to a single value in the example. 
 
 ## Acknowledgments
 
