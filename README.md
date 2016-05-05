@@ -79,7 +79,7 @@ Members originating from [ndarray][ndarray]:
 
 Additional members:
 - `array.names` - The dimension names. A string array of length `array.dimension`.
-- `array.coords` - The dimension coordinates. A Map from (dimension) name to 1D [ndarrays][ndarray].
+- `array.coords` - The coordinates. A Map from (dimension) name to 1D [ndarrays][ndarray].
 
 ### Element access
 

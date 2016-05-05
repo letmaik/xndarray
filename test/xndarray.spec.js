@@ -163,7 +163,8 @@ describe('xndarray methods', () => {
           coords: {
             y: linspace(1,50,50),
             x: linspace(1,50,50),
-            t: [new Date('2000-01-01'), new Date('2000-02-01'), new Date('2000-03-01')]}
+            t: [new Date('2000-01-01'), new Date('2000-02-01'), new Date('2000-03-01')]},
+            foo: ['bar']
         })
         let sliced = arr.pick(null, null, 0)
         assert.deepEqual(sliced.names, ['y','x'])
@@ -171,6 +172,10 @@ describe('xndarray methods', () => {
         assert(sliced.coords.get('y').size, 50)
         assert(sliced.coords.get('x').size, 50)
         assert(sliced.coords.get('t').size, 1)
+      })
+      it('should work with single dimension', () => {
+        let arr = xndarray([1,2])
+        let sliced = arr.pick(0)
       })
     })
     describe('#xpick', () => {

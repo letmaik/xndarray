@@ -26,22 +26,29 @@ export default function xndarray (data, options={}) {
     coords = options.coords
   } else if (options.coords) {
     // a plain object, transform to Map
-    let coordsNames = Object.keys(options.coords)
-    let coordsArr = coordsNames.map(name => !options.coords[name].shape ? ndarray(options.coords[name]) : options.coords[name])
-    coords = new Map(zip(coordsNames, coordsArr))
+    coords = new Map(
+      Object.keys(options.coords)
+        .map(name => [name, options.coords[name]]))
   } else {
     coords = new Map()
   }
+  coords.forEach((arr, name) => {
+    if (!arr.shape) {
+      coords.set(name, ndarray(arr))
+    } else {
+      if (arr.dimension !== 1) {
+        throw new Error('coordinate arrays must be 1D')
+      }
+    }
+  })
   
   // add missing dimension coordinates as ascending integers
   let arange = length => ndarray({get: i => i, length})
-  for (let i=0; i < names.length; i++) {
-    if (!coords.has(names[i])) {
-      coords.set(names[i], arange(ndarr.shape[i]))
-    }
-  }
+  zip(names, ndarr.shape)
+    .filter(([name]) => !coords.has(name))
+    .forEach(([name,size]) => coords.set(name, arange(size)))
 
-  return _xndarray(ndarr, names, coords)
+  return new XNdArray(ndarr, names, coords)
 }
 
 /**
@@ -51,56 +58,88 @@ export default function xndarray (data, options={}) {
  * @param {Map<String,NdArray>} coords - coordinates
  * @returns {XNdArray}
  */
-function _xndarray (nd, names, coords) {
-  let wrapSimple = fnname => (...args) => {
-    let newnd = nd[fnname](...args)
-    let newcoords = new Map(coords)
-    args.forEach((arg,i) => newcoords.set(names[i], coords.get(names[i])[fnname](arg)))
-    return _xndarray(newnd, names, newcoords)
-  }
-  let xnd = {
+class XNdArray {
+  constructor (nd, names, coords) {
+    this.names = names
+    this.coords = coords
+    
+    let wrapSimple = fnname => (...args) => {
+      let newnd = nd[fnname](...args)
+      let newcoords = new Map(coords)
+      args.forEach((arg,i) => newcoords.set(names[i], coords.get(names[i])[fnname](arg)))
+      return new XNdArray(newnd, names, newcoords)
+    }
+    
     // ndarray methods
-    get: nd.get.bind(nd),
-    set: nd.set.bind(nd),
-    index: nd.index.bind(nd),
-    lo: wrapSimple('lo'),
-    hi: wrapSimple('hi'),
-    step: wrapSimple('step'),
-    transpose: (...axes) => {
+    this.get = nd.get.bind(nd)
+    this.set = nd.set.bind(nd)
+    this.index = nd.index.bind(nd)
+    this.lo = wrapSimple('lo')
+    this.hi = wrapSimple('hi')
+    this.step = wrapSimple('step')
+    this.transpose = (...axes) => {
       let newndarr = nd.transpose(...axes)
       let newnames = axes.map(i => names[i])
-      return _xndarray(newndarr, newnames, coords)
-    },
-    pick: (...indices) => {
+      return new XNdArray(newndarr, newnames, coords)
+    }
+    this.pick = (...indices) => {
       let newndarr = nd.pick(...indices)
       let isPicked = i => typeof indices[i] === 'number' && indices[i] >= 0
       let newnames = names.filter((_,i) => !isPicked(i))
+      if (newnames.length === 0) {
+        // no support for degenerate arrays yet
+        return newndarr
+      }
       let newcoords = new Map(coords)
       indices.forEach((idx,i) => {
         if (isPicked(i)) {
           newcoords.set(names[i], coords.get(names[i]).pick(idx))
         }
       })
-      return _xndarray(newndarr, newnames, newcoords)
-    },
-
-    // new instance members
-    names,
-    coords
+      return new XNdArray(newndarr, newnames, newcoords)
+    }
+    
+    // proxy ndarray properties unchanged
+    for (let prop of ['data', 'shape', 'stride', 'offset', 'dtype', 'size', 'order', 'dimension']) {
+      Object.defineProperty(this, prop, {
+        get: () => nd[prop]
+      })
+    }
+    
+    extend(this, compileAxisNamesFunctions(nd, names, coords))
   }
   
-  // proxy ndarray properties unchanged
-  for (let prop of ['data', 'shape', 'stride', 'offset', 'dtype', 'size', 'order', 'dimension']) {
-    Object.defineProperty(xnd, prop, {
-      get: () => nd[prop]
-    })
+  coordsToString (pad) {
+    let s = ''
+    let maxCoordNameLen = 0
+    this.coords.forEach(coordName => maxCoordNameLen = Math.max(maxCoordNameLen, coordName.length))
+    for (let [coordName, coordArr] of this.coords) {
+      let isDim = this.names.indexOf(coordName) !== -1
+      let coordNamePad = ' '.repeat(maxCoordNameLen - coordName.length)
+      let vals = ''
+      let maxVals = 10
+      for (let i=0; i < Math.min(coordArr.size, maxVals); i++) {
+        vals += coordArr.get(i) + ' '
+      }
+      if (coordArr.size > maxVals) {
+        vals += '...'
+      }
+      s += pad + (isDim ? '*' : ' ') + ' ' + coordName + coordNamePad + '  ' + vals + '\n'
+    }
+    return s
   }
   
-  extend(xnd, compileAxisNamesFunctions(nd, names, coords))
+  toString () {
+    let dims = this.names.map((name,i) => name + ': ' + this.shape[i]).join(', ')
+    return `XNdArray (${dims})
+  Coordinates:
+${this.coordsToString('    ')}`
+  }
   
-  xnd.toString = () => `XNdArray { shape: ${xnd.shape}, names: ${xnd.names} }`
-  
-  return xnd
+  // for console output in chrome/nodejs
+  inspect () {
+    return this.toString()
+  }
 }
 
 /**
@@ -128,7 +167,7 @@ function compileAxisNamesFunctions (ndarr, names, coords) {
     let wrapLoHiStep = (newndarr, obj) => {
       let newcoords = new Map(coords)
       names.forEach(name => newcoords.set(name, coords.get(name)[fnname](obj[name])))
-      return _xndarray(newndarr, names, newcoords)
+      return new XNdArray(newndarr, names, newcoords)
     }
     fns['x' + fnname] = new Function('ndarr', 'wrap',
         `return function x${fnname} (obj) { return wrap(ndarr.${fnname}(${idxArgsNull}), obj) }`)(ndarr, wrapLoHiStep)
@@ -136,7 +175,7 @@ function compileAxisNamesFunctions (ndarr, names, coords) {
 
   // xtranspose input: axis names, e.g. 'x', 'y'
   let namesMap = getNamesIndexMap(names)
-  let wrapTranspose = (newndarr, newnames) => _xndarray(newndarr, newnames, coords)
+  let wrapTranspose = (newndarr, newnames) => new XNdArray(newndarr, newnames, coords)
   let xtransposeArgs = names.map((_,i) => `n${i}`).join(',')
   let transposeArgs = names.map((_,i) => `namesMap[n${i}]`).join(',')
   fns.xtranspose = new Function('ndarr', 'wrap', 'namesMap',
@@ -145,9 +184,13 @@ function compileAxisNamesFunctions (ndarr, names, coords) {
   let wrapPick = (newndarr, obj) => {
     let isPicked = name => typeof obj[name] === 'number' && obj[name] >= 0
     let newnames = names.filter(name => !isPicked(name))
+    if (newnames.length === 0) {
+      // no support for degenerate arrays yet
+      return newndarr
+    }
     let newcoords = new Map(coords)
     names.filter(isPicked).forEach(name => newcoords.set(name, coords.get(name).pick(obj[name])))
-    return _xndarray(newndarr, newnames, newcoords)  
+    return new XNdArray(newndarr, newnames, newcoords)  
   }
   fns.xpick = new Function('ndarr', 'wrap', 
       `return function xpick (obj) { return wrap(ndarr.pick(${idxArgsNull}), obj) }`)(ndarr, wrapPick)
