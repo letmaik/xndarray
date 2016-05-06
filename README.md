@@ -10,9 +10,9 @@ Multidimensional arrays with semantics in JavaScript.
 
 xndarray works on browsers and any tool following the CommonJS/node module conventions.
 
-A minified browser version of this library is available in the [GitHub releases](https://github.com/neothemachine/xndarray/releases) and can be included like that:
+A minified browser version of this library is available in the [GitHub releases](https://github.com/neothemachine/xndarray/releases) as well as on the [jsDelivr CDN](http://www.jsdelivr.com/projects/xndarray). It can be included like that:
 ```html
-<script src="xndarray.min.js"></script>
+<script src="//cdn.jsdelivr.net/xndarray/0.3/xndarray.min.js"></script>
 <script>
 var arr = xndarray(...)
 </script>
@@ -54,6 +54,13 @@ var arr = xndarray([1,2,3,4,5,6], {
 
 In the example, there are coordinates for the `y` and `x` dimensions plus an extra coordinate named `t`.
 Extra coordinates are ignored in operations like slicing and carried over unchanged.
+
+##### 0D arrays
+
+You can construct 0D arrays by defining an empty shape without dimension names:
+```js
+var arr = xndarray([5], {shape: [], coords: {time: [new Date('2001-01-01')]})
+```
 
 #### `xndarray(ndarr, {names, coords})`
 
