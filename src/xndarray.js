@@ -36,8 +36,8 @@ export default function xndarray (data, options={}) {
     if (!arr.shape) {
       coords.set(name, ndarray(arr))
     } else {
-      if (arr.dimension !== 1) {
-        throw new Error('coordinate arrays must be 1D')
+      if (arr.dimension > 1) {
+        throw new Error('coordinate arrays must be 0D or 1D')
       }
     }
   })
@@ -86,10 +86,6 @@ class XNdArray {
       let newndarr = nd.pick(...indices)
       let isPicked = i => typeof indices[i] === 'number' && indices[i] >= 0
       let newnames = names.filter((_,i) => !isPicked(i))
-      if (newnames.length === 0) {
-        // no support for degenerate arrays yet
-        return newndarr
-      }
       let newcoords = new Map(coords)
       indices.forEach((idx,i) => {
         if (isPicked(i)) {
@@ -158,9 +154,10 @@ function compileAxisNamesFunctions (ndarr, names, coords) {
   
   let idxArgs0 = indexArgsFn('0')
   for (let [fnname, args=''] of [['get'], ['set', 'v'], ['index']]) {
-    args = args && idxArgs0 ? ',' + args : args
+    let args1 = args ? ',' + args : ''
+    let args2 = args && idxArgs0 ? args1 : args
     fns['x' + fnname] = new Function('ndarr', 
-        `return function x${fnname} (obj${args}) { return ndarr.${fnname}(${idxArgs0}${args}) }`)(ndarr)
+        `return function x${fnname} (obj${args1}) { return ndarr.${fnname}(${idxArgs0}${args2}) }`)(ndarr)
   }
   
   let idxArgsNull = indexArgsFn('null')
@@ -185,10 +182,6 @@ function compileAxisNamesFunctions (ndarr, names, coords) {
   let wrapPick = (newndarr, obj) => {
     let isPicked = name => typeof obj[name] === 'number' && obj[name] >= 0
     let newnames = names.filter(name => !isPicked(name))
-    if (newnames.length === 0) {
-      // no support for degenerate arrays yet
-      return newndarr
-    }
     let newcoords = new Map(coords)
     names.filter(isPicked).forEach(name => newcoords.set(name, coords.get(name).pick(obj[name])))
     return new XNdArray(newndarr, newnames, newcoords)  

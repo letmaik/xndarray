@@ -26,13 +26,13 @@ describe('xndarray constructor', () => {
     assert.deepEqual(unpack(arr.coords.get('dim_1')), [0,1])
   })
   it('should work with 0D data, variant 1', () => {
-    let arr = xndarray(1, {shape: []})
+    let arr = xndarray([1], {shape: []})
     
     assert.deepEqual(arr.names, [])
     assert.strictEqual(arr.dimension, 0)
   })
   it('should work with 0D data, variant 2', () => {
-    let arr = xndarray(1, {shape: [], names: [], coords: {time: '2002'}})
+    let arr = xndarray([1], {shape: [], names: [], coords: {time: ['2002']}})
     
     assert.deepEqual(arr.names, [])
     assert.strictEqual(arr.dimension, 0)
@@ -51,7 +51,12 @@ describe('xndarray constructor', () => {
 describe('xndarray methods', () => {
   describe('Element Access methods', () => {
     describe('#xget', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        assert.strictEqual(arr.xget({}), 1)
+        assert.strictEqual(arr.xget(), 1)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4], {shape: [2,2], names: ['y','x']})
         assert.strictEqual(arr.xget({x: 0, y: 0}), 1)
         assert.strictEqual(arr.xget({x: 1, y: 0}), 2)
@@ -65,7 +70,19 @@ describe('xndarray methods', () => {
       })
     })
     describe('#xset', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        arr.xset({}, 5)
+        assert.strictEqual(arr.xget({}), 5)
+        assert.strictEqual(arr.xget(), 5)
+        
+        arr.xset(null, 6)
+        assert.strictEqual(arr.xget(), 6)
+        
+        arr.xset(undefined, 7)
+        assert.strictEqual(arr.xget(), 7)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4], {shape: [2,2], names: ['y','x']})
         arr.xset({x: 0, y: 1}, 5)
         assert.strictEqual(arr.xget({x: 0, y: 0}), 1)
@@ -75,7 +92,12 @@ describe('xndarray methods', () => {
       })
     })
     describe('#xindex', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        assert.strictEqual(arr.xindex({}), 0)
+        assert.strictEqual(arr.xindex(), 0)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4], {shape: [2,2], names: ['y','x']})
         assert.strictEqual(arr.xindex({x: 0, y: 0}), 0)
         assert.strictEqual(arr.xindex({x: 1, y: 0}), 1)
@@ -99,7 +121,15 @@ describe('xndarray methods', () => {
       })
     })
     describe('#xlo', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        let sliced = arr.xlo({})
+        assert.deepEqual(sliced.shape, [])
+        assert.strictEqual(sliced.size, 1)
+        assert.strictEqual(sliced.dimension, 0)
+        assert.strictEqual(sliced.xget({}), 1)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4], {shape: [2,2], names: ['y','x'], coords: {y: [0,1], x: [2,3]}})
         let sliced = arr.xlo({x: 1, y: 1})
         assert.deepEqual(sliced.shape, [1,1])
@@ -116,7 +146,15 @@ describe('xndarray methods', () => {
       })
     })
     describe('#xhi', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        let sliced = arr.xhi({})
+        assert.deepEqual(sliced.shape, [])
+        assert.strictEqual(sliced.size, 1)
+        assert.strictEqual(sliced.dimension, 0)
+        assert.strictEqual(sliced.xget({}), 1)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4], {shape: [2,2], names: ['y','x'], coords: {y: [0,1], x: [2,3]}})
         let sliced = arr.xhi({x: 1, y: 1})
         assert.deepEqual(sliced.shape, [1,1])
@@ -133,7 +171,15 @@ describe('xndarray methods', () => {
       })
     })
     describe('#xstep', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        let sliced = arr.xstep({})
+        assert.deepEqual(sliced.shape, [])
+        assert.strictEqual(sliced.size, 1)
+        assert.strictEqual(sliced.dimension, 0)
+        assert.strictEqual(sliced.xget({}), 1)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4,5,6], {names: ['x'], coords: {x: [0,1,2,3,4,5]}})
         let evens = arr.xstep({x: 2})
         assert.deepEqual(evens.shape, [3])
@@ -160,7 +206,15 @@ describe('xndarray methods', () => {
       })
     })
     describe('#xtranspose', () => {
-      it('should work correctly', () => {
+      it('should work for 0D arrays', () => {
+        let arr = xndarray([1], {shape: []})
+        let sliced = arr.xtranspose()
+        assert.deepEqual(sliced.shape, [])
+        assert.strictEqual(sliced.size, 1)
+        assert.strictEqual(sliced.dimension, 0)
+        assert.strictEqual(sliced.xget({}), 1)
+      })
+      it('should work for >= 1D arrays', () => {
         let arr = xndarray([1,2,3,4,5,6], {shape: [2,3], names: ['y','x']})
         let transposed = arr.xtranspose('x','y')
         assert.deepEqual(transposed.names, ['x','y'])
@@ -185,13 +239,26 @@ describe('xndarray methods', () => {
         assert(sliced.coords.get('x').size, 50)
         assert(sliced.coords.get('t').size, 1)
       })
-      it('should work with single dimension', () => {
-        let arr = xndarray([1,2])
+      it('should work with 1D arrays', () => {
+        let arr = xndarray([1,2], {names: ['id'], coords: {id: [123,124], time: ['2002']}})
         let sliced = arr.pick(0)
+        assert.strictEqual(sliced.dimension, 0)
+        assert.deepEqual(sliced.names, [])
+        assert.strictEqual(sliced.coords.get('id').size, 1)
+        assert(sliced.coords.has('time'))
+        
       })
     })
     describe('#xpick', () => {
-      it('should work correctly', () => {
+      it('should work for 1D arrays', () => {
+        let arr = xndarray([1,2], {names: ['id'], coords: {id: [123,124], time: ['2002']}})
+        let sliced = arr.xpick({id: 0})
+        assert.strictEqual(sliced.dimension, 0)
+        assert.deepEqual(sliced.names, [])
+        assert.strictEqual(sliced.coords.get('id').size, 1)
+        assert(sliced.coords.has('time'))
+      })
+      it('should work for > 1D arrays', () => {
         let arr = xndarray(new Uint8Array(50*50*3), {
           shape: [50,50,3], 
           names: ['y','x','t'], 
@@ -201,6 +268,7 @@ describe('xndarray methods', () => {
             t: [new Date('2000-01-01'), new Date('2000-02-01'), new Date('2000-03-01')]}
         })
         let sliced = arr.xpick({t: 0})
+        assert.strictEqual(sliced.dimension, 2)
         assert.deepEqual(sliced.names, ['y','x'])
         
         assert(sliced.coords.get('y').size, 50)
