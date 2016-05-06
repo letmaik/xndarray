@@ -147,7 +147,7 @@ ${this.coordsToString('    ')}`
  * 
  * @param {NdArray} ndarr
  * @param {Array<String>} names - axis names
- * @param {Map<String,NdArray>} coords - 1D domain array for each axis
+ * @param {Map<String,NdArray>} coords - 0D or 1D coordinate arrays
  * @returns {Object}
  */
 function compileAxisNamesFunctions (ndarr, names, coords) {
@@ -157,7 +157,8 @@ function compileAxisNamesFunctions (ndarr, names, coords) {
   let indexArgsFn = defaultVal => names.map((_,i) => `'${names[i]}' in obj ? obj['${names[i]}'] : ${defaultVal}`).join(',')
   
   let idxArgs0 = indexArgsFn('0')
-  for (let [fnname, args=''] of [['get'], ['set', ',v'], ['index']]) {
+  for (let [fnname, args=''] of [['get'], ['set', 'v'], ['index']]) {
+    args = args && idxArgs0 ? ',' + args : args
     fns['x' + fnname] = new Function('ndarr', 
         `return function x${fnname} (obj${args}) { return ndarr.${fnname}(${idxArgs0}${args}) }`)(ndarr)
   }

@@ -25,6 +25,18 @@ describe('xndarray constructor', () => {
     assert.deepEqual(unpack(arr.coords.get('dim_0')), [0,1])
     assert.deepEqual(unpack(arr.coords.get('dim_1')), [0,1])
   })
+  it('should work with 0D data, variant 1', () => {
+    let arr = xndarray(1, {shape: []})
+    
+    assert.deepEqual(arr.names, [])
+    assert.strictEqual(arr.dimension, 0)
+  })
+  it('should work with 0D data, variant 2', () => {
+    let arr = xndarray(1, {shape: [], names: [], coords: {time: '2002'}})
+    
+    assert.deepEqual(arr.names, [])
+    assert.strictEqual(arr.dimension, 0)
+  })
   it('should work with ndarray bidirectionally', () => {
     let nd = ndarray([1,2,3,4], [2,2])
     let arr = xndarray(nd, {coords: [[5,6],[0,1]]})
