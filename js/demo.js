@@ -186,4 +186,6 @@ var overlays = {
 }
 L.control.layers(null, overlays, {collapsed: false}).addTo(map)
 
+window.map = map
+window.dataLayer = originalRasterLayer
 })()
