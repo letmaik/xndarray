@@ -64,7 +64,7 @@ var arr = xndarray([5], {shape: [], coords: {time: [new Date('2001-01-01')]})
 
 #### `xndarray(ndarr, {names, coords})`
 
-This constructor variant wraps existing ndarray objects.
+This constructor variant wraps existing [ndarray][ndarray] objects.
 
 - `ndarr` is an [ndarray][ndarray] object.
 - `names` is an array of dimension names (Default: `['dim_0','dim_1',...]`)
