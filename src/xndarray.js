@@ -1,6 +1,7 @@
 import ndarray from 'ndarray'
 
 /**
+ * Create a new xndarray instance.
  * 
  * @param {NdArray|Array<Array>|Array<TypedArray>|Array<{get,set,length}>} data
  * @param {Array<number>} [options.shape] - Array shape, not used if data is an NdArray
@@ -52,6 +53,7 @@ export default function xndarray (data, options={}) {
 }
 
 /**
+ * The workhorse of this library.
  * 
  * @param {NdArray} nd
  * @param {Array<String>} names - axis names
@@ -203,12 +205,18 @@ function getNamesIndexMap (names) {
   return namesMap
 }
 
+/**
+ * Extend an object in-place with the given properties.
+ */
 function extend (obj, props) {
   for (let prop in props) {
     obj[prop] = props[prop]
   }
 }
 
+/**
+ * Zip two arrays of same length together into a list of pairs.
+ */
 function zip (a, b) {
   let r = new Array(a.length)
   for (let i=0; i < a.length; i++) {
