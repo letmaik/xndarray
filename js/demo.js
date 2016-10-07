@@ -42,9 +42,11 @@ var GridDataLayer = L.GridLayer.extend({
     // used for longitude wrapping
     var lonRange = [lonMin, lonMin + 360]
     
+    var zoom = coords.z
+    
     for (var tileX = 0; tileX < size.x; tileX++) {
       for (var tileY = 0; tileY < size.y; tileY++) {
-        var latlng = map.unproject(L.point(startX + tileX, startY + tileY))
+        var latlng = map.unproject(L.point(startX + tileX, startY + tileY), zoom)
         var lat = latlng.lat
         var lon = latlng.lng
 
@@ -87,9 +89,9 @@ var GridDataLayer = L.GridLayer.extend({
 })
 
 function toAscendingCoords (griddata) {
-  let res = griddata
-  let lat = griddata.coords.get('lat')
-  let lon = griddata.coords.get('lon')
+  var res = griddata
+  var lat = griddata.coords.get('lat')
+  var lon = griddata.coords.get('lon')
   if (lat.size > 1 && lat.get(0) > lat.get(1)) {
     res = res.xstep({lat: -1})
   }
@@ -109,7 +111,7 @@ function hexToRgb (colors) {
 function scale (val, palette, extent) {
   // scale val to [0,paletteSize-1] using the palette extent
   // (IDL bytscl formula: http://www.exelisvis.com/docs/BYTSCL.html)
-  let scaled = Math.trunc((palette.length - 1 + 0.9999) * (val - extent[0]) / (extent[1] - extent[0]))
+  var scaled = Math.trunc((palette.length - 1 + 0.9999) * (val - extent[0]) / (extent[1] - extent[0]))
   return scaled
 }
 
@@ -150,7 +152,7 @@ function linspace (start, end, n) {
   }
 }
 
-let map = L.map('map', {
+var map = L.map('map', {
   center: [10, 0],
   zoom: 2
 })
