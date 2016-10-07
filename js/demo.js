@@ -153,11 +153,11 @@ function linspace (start, end, n) {
 }
 
 var map = L.map('map', {
-  center: [10, 0],
-  zoom: 2
+  center: {lat: 50, lng: 20},
+  zoom: 4
 })
 
-L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
    attribution: 'Map data &copy; <a href="http://www.osm.org">OpenStreetMap</a>'
 }).addTo(map)
 
